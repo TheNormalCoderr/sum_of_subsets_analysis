@@ -1,0 +1,248 @@
+======================================================================
+  EXPERIMENT: SUM OF SUBSETS USING BACKTRACKING
+  Subject     : Algorithm Design and Analysis (ADA)
+  Language    : C++
+======================================================================
+  Enter number of elements:
+  Enter elements (space-separated):
+  Enter target sum:
+
+======================================================================
+  TEST CASE 1
+======================================================================
+  Input Set    : [5, 10, 12, 13, 15, 18]
+  Sorted Set   : [5, 10, 12, 13, 15, 18]
+  Target Sum   : 30
+  Total Sum    : 73
+======================================================================
+  Backtracking Trace:
+
+  CALL #1  (index=0, sum=0, remaining=73, subset=[])
+
+  TRY arr[0]=5
+  CHOOSE arr[0]=  5  -> sum 0 + 5 =    5  subset=[5]
+    CALL #2  (index=1, sum=5, remaining=68, subset=[5])
+
+    TRY arr[1]=10
+    CHOOSE arr[1]= 10  -> sum 5 + 10 =   15  subset=[5, 10]
+      CALL #3  (index=2, sum=15, remaining=58, subset=[5, 10])
+
+      TRY arr[2]=12
+      CHOOSE arr[2]= 12  -> sum 15 + 12 =   27  subset=[5, 10, 12]
+        CALL #4  (index=3, sum=27, remaining=46, subset=[5, 10, 12])
+
+        TRY arr[3]=13
+        PRUNE (over target) : 27 + 13 = 40 > 30
+
+        RETURN #4
+
+      BACKTRACK remove arr[2]= 12  subset=[5, 10]
+
+      TRY arr[3]=13
+      CHOOSE arr[3]= 13  -> sum 15 + 13 =   28  subset=[5, 10, 13]
+        CALL #5  (index=4, sum=28, remaining=33, subset=[5, 10, 13])
+
+        TRY arr[4]=15
+        PRUNE (over target) : 28 + 15 = 43 > 30
+
+        RETURN #5
+
+      BACKTRACK remove arr[3]= 13  subset=[5, 10]
+
+      TRY arr[4]=15
+      CHOOSE arr[4]= 15  -> sum 15 + 15 =   30  subset=[5, 10, 15]
+        CALL #6  (index=5, sum=30, remaining=18, subset=[5, 10, 15])
+
+        => SOLUTION FOUND [5, 10, 15]  (sum=30)
+        RETURN #6
+
+      BACKTRACK remove arr[4]= 15  subset=[5, 10]
+
+      TRY arr[5]=18
+      PRUNE (over target) : 15 + 18 = 33 > 30
+
+      RETURN #3
+
+    BACKTRACK remove arr[1]= 10  subset=[5]
+
+    TRY arr[2]=12
+    CHOOSE arr[2]= 12  -> sum 5 + 12 =   17  subset=[5, 12]
+      CALL #7  (index=3, sum=17, remaining=46, subset=[5, 12])
+
+      TRY arr[3]=13
+      CHOOSE arr[3]= 13  -> sum 17 + 13 =   30  subset=[5, 12, 13]
+        CALL #8  (index=4, sum=30, remaining=33, subset=[5, 12, 13])
+
+        => SOLUTION FOUND [5, 12, 13]  (sum=30)
+        RETURN #8
+
+      BACKTRACK remove arr[3]= 13  subset=[5, 12]
+
+      TRY arr[4]=15
+      PRUNE (over target) : 17 + 15 = 32 > 30
+
+      RETURN #7
+
+    BACKTRACK remove arr[2]= 12  subset=[5]
+
+    TRY arr[3]=13
+    CHOOSE arr[3]= 13  -> sum 5 + 13 =   18  subset=[5, 13]
+      CALL #9  (index=4, sum=18, remaining=33, subset=[5, 13])
+
+      TRY arr[4]=15
+      PRUNE (over target) : 18 + 15 = 33 > 30
+
+      RETURN #9
+
+    BACKTRACK remove arr[3]= 13  subset=[5]
+
+    TRY arr[4]=15
+    CHOOSE arr[4]= 15  -> sum 5 + 15 =   20  subset=[5, 15]
+      CALL #10  (index=5, sum=20, remaining=18, subset=[5, 15])
+
+      TRY arr[5]=18
+      PRUNE (over target) : 20 + 18 = 38 > 30
+
+      RETURN #10
+
+    BACKTRACK remove arr[4]= 15  subset=[5]
+
+    TRY arr[5]=18
+    PRUNE (insufficient possible sum) : 5 + 18 = 23 < 30
+
+    RETURN #2
+
+  BACKTRACK remove arr[0]=  5  subset=[]
+
+  TRY arr[1]=10
+  CHOOSE arr[1]= 10  -> sum 0 + 10 =   10  subset=[10]
+    CALL #11  (index=2, sum=10, remaining=58, subset=[10])
+
+    TRY arr[2]=12
+    CHOOSE arr[2]= 12  -> sum 10 + 12 =   22  subset=[10, 12]
+      CALL #12  (index=3, sum=22, remaining=46, subset=[10, 12])
+
+      TRY arr[3]=13
+      PRUNE (over target) : 22 + 13 = 35 > 30
+
+      RETURN #12
+
+    BACKTRACK remove arr[2]= 12  subset=[10]
+
+    TRY arr[3]=13
+    CHOOSE arr[3]= 13  -> sum 10 + 13 =   23  subset=[10, 13]
+      CALL #13  (index=4, sum=23, remaining=33, subset=[10, 13])
+
+      TRY arr[4]=15
+      PRUNE (over target) : 23 + 15 = 38 > 30
+
+      RETURN #13
+
+    BACKTRACK remove arr[3]= 13  subset=[10]
+
+    TRY arr[4]=15
+    CHOOSE arr[4]= 15  -> sum 10 + 15 =   25  subset=[10, 15]
+      CALL #14  (index=5, sum=25, remaining=18, subset=[10, 15])
+
+      TRY arr[5]=18
+      PRUNE (over target) : 25 + 18 = 43 > 30
+
+      RETURN #14
+
+    BACKTRACK remove arr[4]= 15  subset=[10]
+
+    TRY arr[5]=18
+    PRUNE (insufficient possible sum) : 10 + 18 = 28 < 30
+
+    RETURN #11
+
+  BACKTRACK remove arr[1]= 10  subset=[]
+
+  TRY arr[2]=12
+  CHOOSE arr[2]= 12  -> sum 0 + 12 =   12  subset=[12]
+    CALL #15  (index=3, sum=12, remaining=46, subset=[12])
+
+    TRY arr[3]=13
+    CHOOSE arr[3]= 13  -> sum 12 + 13 =   25  subset=[12, 13]
+      CALL #16  (index=4, sum=25, remaining=33, subset=[12, 13])
+
+      TRY arr[4]=15
+      PRUNE (over target) : 25 + 15 = 40 > 30
+
+      RETURN #16
+
+    BACKTRACK remove arr[3]= 13  subset=[12]
+
+    TRY arr[4]=15
+    CHOOSE arr[4]= 15  -> sum 12 + 15 =   27  subset=[12, 15]
+      CALL #17  (index=5, sum=27, remaining=18, subset=[12, 15])
+
+      TRY arr[5]=18
+      PRUNE (over target) : 27 + 18 = 45 > 30
+
+      RETURN #17
+
+    BACKTRACK remove arr[4]= 15  subset=[12]
+
+    TRY arr[5]=18
+    CHOOSE arr[5]= 18  -> sum 12 + 18 =   30  subset=[12, 18]
+      CALL #18  (index=6, sum=30, remaining=0, subset=[12, 18])
+
+      => SOLUTION FOUND [12, 18]  (sum=30)
+      RETURN #18
+
+    BACKTRACK remove arr[5]= 18  subset=[12]
+
+    RETURN #15
+
+  BACKTRACK remove arr[2]= 12  subset=[]
+
+  TRY arr[3]=13
+  CHOOSE arr[3]= 13  -> sum 0 + 13 =   13  subset=[13]
+    CALL #19  (index=4, sum=13, remaining=33, subset=[13])
+
+    TRY arr[4]=15
+    CHOOSE arr[4]= 15  -> sum 13 + 15 =   28  subset=[13, 15]
+      CALL #20  (index=5, sum=28, remaining=18, subset=[13, 15])
+
+      TRY arr[5]=18
+      PRUNE (over target) : 28 + 18 = 46 > 30
+
+      RETURN #20
+
+    BACKTRACK remove arr[4]= 15  subset=[13]
+
+    TRY arr[5]=18
+    PRUNE (over target) : 13 + 18 = 31 > 30
+
+    RETURN #19
+
+  BACKTRACK remove arr[3]= 13  subset=[]
+
+  TRY arr[4]=15
+  CHOOSE arr[4]= 15  -> sum 0 + 15 =   15  subset=[15]
+    CALL #21  (index=5, sum=15, remaining=18, subset=[15])
+
+    TRY arr[5]=18
+    PRUNE (over target) : 15 + 18 = 33 > 30
+
+    RETURN #21
+
+  BACKTRACK remove arr[4]= 15  subset=[]
+
+  TRY arr[5]=18
+  PRUNE (insufficient possible sum) : 0 + 18 = 18 < 30
+
+  RETURN #1
+
+
+======================================================================
+  Total Solutions : 3
+    Solution 1    : [5, 10, 15]  -->  Sum = 30
+    Solution 2    : [5, 12, 13]  -->  Sum = 30
+    Solution 3    : [12, 18]  -->  Sum = 30
+======================================================================
+
+======================================================================
+  END OF EXPERIMENT
+======================================================================
