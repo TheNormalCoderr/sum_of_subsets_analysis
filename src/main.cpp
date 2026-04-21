@@ -1,268 +1,100 @@
-// =============================================================================
-// Experiment: Sum of Subsets using Backtracking
-// Subject   : Algorithm Design and Analysis (ADA)
-// Language  : C++
-// =============================================================================
-
-#include <iostream>
-#include <fstream>
-#include <vector>
 #include <algorithm>
-#include <string>
-#include <sstream>
-#include <iomanip>
+#include <fstream>
+#include <iostream>
+#include <vector>
 
 using namespace std;
 
-// ---------------------------------------------------------------------------
-// Global log buffer
-// ---------------------------------------------------------------------------
-vector<string> logLines;
+// Backtracking for subset sum: include/exclude each element.
+void findSubsets(const vector<int>& arr,
+                 int idx,
+                 int target,
+                 int currentSum,
+                 vector<int>& current,
+                 vector<vector<int>>& solutions) {
+    if (currentSum == target) {
+        solutions.push_back(current);
+        return;
+    }
 
-void logMsg(const string& msg = "") {
-    cout << msg << "\n";
-    logLines.push_back(msg);
+    if (idx >= (int)arr.size() || currentSum > target) {
+        return;
+    }
+
+    // Choice 1: include arr[idx]
+    current.push_back(arr[idx]);
+    findSubsets(arr, idx + 1, target, currentSum + arr[idx], current, solutions);
+    current.pop_back();
+
+    // Choice 2: exclude arr[idx]
+    findSubsets(arr, idx + 1, target, currentSum, current, solutions);
 }
 
-// ---------------------------------------------------------------------------
-// Helper: format a vector as [a, b, c]
-// ---------------------------------------------------------------------------
-string vecToStr(const vector<int>& v) {
+string subsetToString(const vector<int>& subset) {
     string s = "[";
-    for (int i = 0; i < (int)v.size(); i++) {
-        s += to_string(v[i]);
-        if (i + 1 < (int)v.size()) s += ", ";
+    for (int i = 0; i < (int)subset.size(); i++) {
+        s += to_string(subset[i]);
+        if (i + 1 < (int)subset.size()) s += ", ";
     }
     s += "]";
     return s;
 }
 
-// ---------------------------------------------------------------------------
-// Global solutions container
-// ---------------------------------------------------------------------------
-vector<vector<int>> solutions;
-long long traceCallId = 0;
-
-string indent(int depth) {
-    return string(depth * 2, ' ');
-}
-
-// ---------------------------------------------------------------------------
-// Core Backtracking Function
-// ---------------------------------------------------------------------------
-void sumOfSubsets(vector<int>& arr, int index,
-                  vector<int>& currentSubset,
-                  int currentSum, int target, int remaining,
-                  int depth) {
-    long long myCall = ++traceCallId;
-    {
-        ostringstream oss;
-        oss << "  " << indent(depth)
-            << "CALL #" << myCall
-            << "  (index=" << index
-            << ", sum=" << currentSum
-            << ", remaining=" << remaining
-            << ", subset=" << vecToStr(currentSubset) << ")";
-        logMsg(oss.str());
-        logMsg();
-    }
-
-    // --- Base Case: Target reached ---
-    if (currentSum == target) {
-        solutions.push_back(currentSubset);
-        logMsg("  " + indent(depth) + "=> SOLUTION FOUND " + vecToStr(currentSubset) +
-               "  (sum=" + to_string(currentSum) + ")");
-        logMsg("  " + indent(depth) + "RETURN #" + to_string(myCall));
-        logMsg();
-        return;
-    }
-
-    int n = (int)arr.size();
-
-    for (int i = index; i < n; i++) {
-        {
-            ostringstream oss;
-            oss << "  " << indent(depth)
-                << "TRY arr[" << i << "]=" << arr[i];
-            logMsg(oss.str());
-        }
-
-        // --- Pruning: over-sum ---
-        if (currentSum + arr[i] > target) {
-            ostringstream oss;
-            oss << "  " << indent(depth)
-                << "PRUNE (over target) : " << currentSum
-                << " + " << arr[i]
-                << " = " << (currentSum + arr[i])
-                << " > " << target;
-            logMsg(oss.str());
-            logMsg();
-            break;  // sorted array: no point checking further
-        }
-
-        // --- Pruning: under-sum ---
-        if (currentSum + remaining < target) {
-            ostringstream oss;
-            oss << "  " << indent(depth)
-                << "PRUNE (insufficient possible sum) : "
-                << currentSum << " + " << remaining
-                << " = " << (currentSum + remaining)
-                << " < " << target;
-            logMsg(oss.str());
-            logMsg();
-            break;
-        }
-
-        // --- Include arr[i] ---
-        currentSubset.push_back(arr[i]);
-        {
-            ostringstream oss;
-            oss << "  " << indent(depth)
-                << "CHOOSE arr[" << i << "]=" << setw(3) << arr[i]
-                << "  -> sum " << currentSum
-                << " + " << arr[i]
-                << " = " << setw(4) << (currentSum + arr[i])
-                << "  subset=" << vecToStr(currentSubset);
-            logMsg(oss.str());
-        }
-
-        // Recurse
-        sumOfSubsets(arr, i + 1, currentSubset,
-                     currentSum + arr[i], target, remaining - arr[i], depth + 1);
-
-        // --- Exclude arr[i] (Backtrack) ---
-        currentSubset.pop_back();
-        remaining -= arr[i];
-        {
-            ostringstream oss;
-            oss << "  " << indent(depth)
-                << "BACKTRACK remove arr[" << i << "]=" << setw(3) << arr[i]
-                << "  subset=" << vecToStr(currentSubset);
-            logMsg(oss.str());
-            logMsg();
-        }
-    }
-    logMsg("  " + indent(depth) + "RETURN #" + to_string(myCall));
-    logMsg();
-}
-
-// ---------------------------------------------------------------------------
-// Run one test case
-// ---------------------------------------------------------------------------
-void runExperiment(int testNum, vector<int> rawSet, int target) {
-    solutions.clear();
-
-    sort(rawSet.begin(), rawSet.end());
-    int total = 0;
-    for (int x : rawSet) total += x;
-
-    string sep(70, '=');
-
-    logMsg();
-    logMsg(sep);
-    logMsg("  TEST CASE " + to_string(testNum));
-    logMsg(sep);
-    logMsg("  Input Set    : " + vecToStr(rawSet));
-    logMsg("  Sorted Set   : " + vecToStr(rawSet));   // already sorted
-    logMsg("  Target Sum   : " + to_string(target));
-    logMsg("  Total Sum    : " + to_string(total));
-    logMsg(sep);
-
-    if (target > total) {
-        logMsg("  [INFO] Target " + to_string(target) +
-               " exceeds total sum " + to_string(total) +
-               ". No solution possible.");
-        logMsg(sep);
-        return;
-    }
-
-    logMsg("  Backtracking Trace:");
-    logMsg();
-
-    vector<int> subset;
-    traceCallId = 0;
-    sumOfSubsets(rawSet, 0, subset, 0, target, total, 0);
-
-    logMsg();
-    logMsg(sep);
-    if (!solutions.empty()) {
-        logMsg("  Total Solutions : " + to_string(solutions.size()));
-        for (int i = 0; i < (int)solutions.size(); i++) {
-            int s = 0;
-            for (int x : solutions[i]) s += x;
-            logMsg("    Solution " + to_string(i + 1) +
-                   "    : " + vecToStr(solutions[i]) +
-                   "  -->  Sum = " + to_string(s));
-        }
-    } else {
-        logMsg("  No subset found that sums to the target.");
-    }
-    logMsg(sep);
-    logMsg();
-}
-
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
 int main() {
-    string sep(70, '=');
-
-    logMsg(sep);
-    logMsg("  EXPERIMENT: SUM OF SUBSETS USING BACKTRACKING");
-    logMsg("  Subject     : Algorithm Design and Analysis (ADA)");
-    logMsg("  Language    : C++");
-    logMsg(sep);
-
     int n;
-    logMsg("  Enter number of elements:");
-    cout << "  > ";
+    // Read number of elements in the set.
+    cout << "Enter number of elements: ";
     cin >> n;
 
+    // Basic input guard.
     if (!cin || n <= 0) {
-        cerr << "[ERROR] Invalid number of elements.\n";
+        cerr << "Invalid number of elements.\n";
         return 1;
     }
 
-    vector<int> userSet(n);
-    logMsg("  Enter elements (space-separated):");
-    cout << "  > ";
-    for (int i = 0; i < n; i++) {
-        cin >> userSet[i];
-        if (!cin) {
-            cerr << "[ERROR] Invalid element input.\n";
-            return 1;
+    vector<int> arr(n);
+    cout << "Enter elements: ";
+    for (int i = 0; i < n; i++) cin >> arr[i];
+
+    int target;
+    cout << "Enter target sum: ";
+    cin >> target;
+
+    if (!cin) {
+        cerr << "Invalid target.\n";
+        return 1;
+    }
+
+    // Sorting keeps output tidy and predictable.
+    sort(arr.begin(), arr.end());
+
+    // Run backtracking search.
+    vector<int> current;
+    vector<vector<int>> solutions;
+    findSubsets(arr, 0, target, 0, current, solutions);
+
+    // Save summary and solutions to output file.
+    const string outDir = "/Users/amiteshwarsingh/Documents/ADA/sos/output/";
+    system(("mkdir -p " + outDir).c_str());
+    ofstream out(outDir + "output.txt");
+    if (!out) {
+        cerr << "Cannot open output file.\n";
+        return 1;
+    }
+
+    cout << "Total solutions: " << solutions.size() << "\n";
+    out << "Array: ";
+    for (int x : arr) out << x << " ";
+    out << "\nTarget: " << target << "\n\n";
+
+    if (solutions.empty()) {
+        out << "No subset found.\n";
+    } else {
+        for (int i = 0; i < (int)solutions.size(); i++) {
+            out << "Solution " << (i + 1) << ": " << subsetToString(solutions[i]) << "\n";
         }
     }
 
-    int target;
-    logMsg("  Enter target sum:");
-    cout << "  > ";
-    cin >> target;
-    if (!cin) {
-        cerr << "[ERROR] Invalid target input.\n";
-        return 1;
-    }
-
-    runExperiment(1, userSet, target);
-
-    logMsg(sep);
-    logMsg("  END OF EXPERIMENT");
-    logMsg(sep);
-
-    // -----------------------------------------------------------------------
-    // Write output files
-    // -----------------------------------------------------------------------
-    string outputDir = "/Users/amiteshwarsingh/Documents/ADA/sos/output/";
-
-    auto writeFile = [&](const string& path) {
-        ofstream f(path);
-        if (!f) { cerr << "[ERROR] Cannot open: " << path << "\n"; return; }
-        for (const auto& line : logLines) f << line << "\n";
-        cout << "[INFO] Output saved to: " << path << "\n";
-    };
-
-    writeFile(outputDir + "terminal_output.txt");
-    writeFile(outputDir + "output.txt");
-
+    cout << "Output saved to: " << outDir << "output.txt\n";
     return 0;
 }

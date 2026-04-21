@@ -24,9 +24,6 @@ from matplotlib.patches import Rectangle, FancyBboxPatch
 from collections import defaultdict
 import os
 
-# ─────────────────────────────────────────────────────────────────────────────
-# INPUT
-# ─────────────────────────────────────────────────────────────────────────────
 default_set = [3, 1, 2, 5, 4]
 default_target = 5
 
@@ -61,28 +58,10 @@ print(f"  Sorted array : {arr}")
 print(f"  Target       : {TARGET}")
 print()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 1.  BUILD TREE
-#
-#  Node at depth d:
-#    subset    = elements included by decisions 0 … d-1  (BEFORE deciding arr[d])
-#    cur_sum   = sum(subset)
-#    target_rem = TARGET - cur_sum
-#    arr[d] is the element being decided NEXT  (highlighted in the Arr row)
-#
-#  Children (added in order [exclude, include] so left < right in layout):
-#    Exclude arr[d]  →  same subset / sum, depth d+1
-#    Include arr[d]  →  subset + arr[d], sum + arr[d], depth d+1
-#
-#  Termination rules:
-#    • target_rem == 0           → 'solution'  (stop expanding; already at target)
-#    • cur_sum  > TARGET         → 'pruned'    (over-sum; shouldn't reach target)
-#    • depth    == n, rem ≠ 0   → 'dead'      (exhausted all elements, no match)
-# ─────────────────────────────────────────────────────────────────────────────
 
 node_ctr  = [0]
-all_nodes = {}          # nid → dict
-all_edges = []          # (parent_id, child_id, 'include'|'exclude')
+all_nodes = {}
+all_edges = []
 
 
 def add_node(depth, subset, cur_sum, state, parent_id, choice=""):
@@ -104,16 +83,15 @@ def add_node(depth, subset, cur_sum, state, parent_id, choice=""):
 def build(parent_id, depth, subset, cur_sum):
     """Recursively create left (exclude) and right (include) children."""
     if depth >= n:
-        return          # parent is already a leaf; nothing more to expand
+        return
 
-    # ── LEFT child : exclude arr[depth] ──────────────────────────────────────
     ex_sum = cur_sum
     ex_sub = list(subset)
     ex_rem = TARGET - ex_sum
     if ex_rem == 0:
-        ex_state = 'solution'               # already at target without this elem
+        ex_state = 'solution'
     elif depth + 1 == n:
-        ex_state = 'dead'                   # no more elements; didn't reach target
+        ex_state = 'dead'
     else:
         ex_state = 'normal'
 
@@ -121,16 +99,15 @@ def build(parent_id, depth, subset, cur_sum):
     if ex_state == 'normal':
         build(cid_ex, depth + 1, ex_sub, ex_sum)
 
-    # ── RIGHT child : include arr[depth] ─────────────────────────────────────
     in_sum = cur_sum + arr[depth]
     in_sub = list(subset) + [arr[depth]]
     in_rem = TARGET - in_sum
     if in_sum > TARGET:
-        in_state = 'pruned'                 # over-sum → cut branch
+        in_state = 'pruned'
     elif in_rem == 0:
-        in_state = 'solution'               # exact match!
+        in_state = 'solution'
     elif depth + 1 == n:
-        in_state = 'dead'                   # all elements used; not reached target
+        in_state = 'dead'
     else:
         in_state = 'normal'
 
@@ -139,7 +116,6 @@ def build(parent_id, depth, subset, cur_sum):
         build(cid_in, depth + 1, in_sub, in_sum)
 
 
-# Root: depth 0, empty subset, deciding arr[0]
 root_id = add_node(0, [], 0, 'normal', None, "")
 build(root_id, 0, [], 0)
 
@@ -153,19 +129,15 @@ print(f"  Dead ends    : {dead_cnt}")
 print(f"  Pruned       : {prune_cnt}")
 print()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 2.  LAYOUT  (leaf-cursor algorithm — same as N-Queens reference)
-# ─────────────────────────────────────────────────────────────────────────────
 
 children = defaultdict(list)
 for (pid, cid, ch) in all_edges:
-    children[pid].append(cid)          # order: exclude first → "left" child
+    children[pid].append(cid)
 
-# Visual dimensions
-NODE_W = 3.40     # node box width
-NODE_H = 1.60     # node box height
-H_GAP  = 0.60     # horizontal gap between same-level leaf nodes
-V_GAP  = 1.70     # vertical gap between depth levels (room for edge labels)
+NODE_W = 3.40
+NODE_H = 1.60
+H_GAP  = 0.60
+V_GAP  = 1.70
 
 pos      = {}
 x_cursor = [0.0]
@@ -173,7 +145,7 @@ x_cursor = [0.0]
 
 def layout(nid, depth):
     ch = children.get(nid, [])
-    if not ch:                                    # leaf → place at cursor
+    if not ch:
         cx = x_cursor[0] + NODE_W / 2
         cy = -depth * (NODE_H + V_GAP)
         pos[nid] = (cx, cy)
@@ -193,9 +165,6 @@ layout(root_id, 0)
 all_xs = [v[0] for v in pos.values()]
 all_ys = [v[1] for v in pos.values()]
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 3.  COLOUR SCHEME
-# ─────────────────────────────────────────────────────────────────────────────
 
 STATE_STYLE = {
     'normal'  : dict(bg='#FFFFFF', ec='#90A4AE', lw=1.4, ls='-' ),
@@ -204,9 +173,6 @@ STATE_STYLE = {
     'pruned'  : dict(bg='#FFF3F3', ec='#EF5350', lw=1.8, ls='-' ),
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 4.  FIGURE
-# ─────────────────────────────────────────────────────────────────────────────
 
 FIG_W = (max(all_xs) - min(all_xs)) + NODE_W + 8.5
 FIG_H = abs(min(all_ys)) + NODE_H + 5.0
@@ -217,7 +183,6 @@ ax.set_facecolor('#FFFFFF')
 ax.set_aspect('equal')
 ax.axis('off')
 
-# ── Edges + edge labels ───────────────────────────────────────────────────────
 for (pid, cid, choice) in all_edges:
     px, py = pos[pid]
     cx, cy = pos[cid]
@@ -237,18 +202,14 @@ for (pid, cid, choice) in all_edges:
             bbox=dict(boxstyle='round,pad=0.14', fc='#FFFFFF', ec='#CFD8DC', alpha=0.96),
             zorder=3)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 5.  NODE DRAWING FUNCTION
-# ─────────────────────────────────────────────────────────────────────────────
 
-# Internal layout constants (computed once)
-CELL   = 0.31     # square cell side for element boxes
-GAP    = 0.05     # gap between cells
-PADL   = 0.14     # left inner padding
-PADT   = 0.12     # top  inner padding
-LBLW   = 0.92     # width reserved for "Arr" / "Subset" label
-ROWSP  = 0.46     # vertical spacing between rows
-DIVLW  = 0.5      # divider line weight
+CELL   = 0.31
+GAP    = 0.05
+PADL   = 0.14
+PADT   = 0.12
+LBLW   = 0.92
+ROWSP  = 0.46
+DIVLW  = 0.5
 
 
 def draw_node(cx, cy, node):
@@ -261,7 +222,6 @@ def draw_node(cx, cy, node):
     x0 = cx - NODE_W / 2
     y0 = cy - NODE_H / 2
 
-    # ── Node box (background + border) ───────────────────────────────────────
     ax.add_patch(Rectangle(
         (x0, y0), NODE_W, NODE_H,
         facecolor=s['bg'], edgecolor=s['ec'],
@@ -269,12 +229,10 @@ def draw_node(cx, cy, node):
         zorder=4
     ))
 
-    # ── Row y-positions (top edges of each row) ───────────────────────────────
-    r1_y = y0 + NODE_H - PADT - CELL      # Arr row
-    r2_y = r1_y - ROWSP                   # Subset row
-    r3_y = r2_y - ROWSP * 0.82            # TargetSum text
+    r1_y = y0 + NODE_H - PADT - CELL
+    r2_y = r1_y - ROWSP
+    r3_y = r2_y - ROWSP * 0.82
 
-    # ─── ROW 1 : Arr ─────────────────────────────────────────────────────────
     ax.text(x0 + PADL, r1_y + CELL / 2, "Arr",
             ha='left', va='center', fontsize=13.0,
             color='#37474F', fontweight='bold', zorder=6)
@@ -282,14 +240,14 @@ def draw_node(cx, cy, node):
     for j in range(n):
         bx      = x0 + PADL + LBLW + j * (CELL + GAP)
         is_cur  = (j == depth) and (depth < n)
-        is_incl = arr[j] in subset        # works because arr has distinct values
+        is_incl = arr[j] in subset
 
         if is_cur:
-            fc, ec_c = '#FFD54F', '#E65100'    # amber  = current decision
+            fc, ec_c = '#FFD54F', '#E65100'
         elif is_incl:
-            fc, ec_c = '#BBDEFB', '#1565C0'    # blue   = already included
+            fc, ec_c = '#BBDEFB', '#1565C0'
         else:
-            fc, ec_c = '#FFF9C4', '#F9A825'    # yellow = not yet decided
+            fc, ec_c = '#FFF9C4', '#F9A825'
 
         ax.add_patch(Rectangle(
             (bx, r1_y), CELL, CELL,
@@ -300,25 +258,21 @@ def draw_node(cx, cy, node):
                 ha='center', va='center',
                 fontsize=11.0, color='#212121', fontweight='bold', zorder=6)
 
-        # ✦ marker above current element
         if is_cur:
             ax.text(bx + CELL / 2, r1_y + CELL + 0.018, '✦',
                     ha='center', va='bottom',
                     fontsize=10.0, color='#E65100', zorder=6)
 
-    # Divider line
     ax.plot([x0 + 0.06, x0 + NODE_W - 0.06],
             [r2_y + CELL + 0.028, r2_y + CELL + 0.028],
             color='#ECEFF1', lw=DIVLW, zorder=5)
 
-    # ─── ROW 2 : Subset ──────────────────────────────────────────────────────
     ax.text(x0 + PADL, r2_y + CELL / 2, "Subset",
             ha='left', va='center', fontsize=12.0,
             color='#37474F', fontweight='bold', zorder=6)
 
     sub_x0 = x0 + PADL + LBLW
     if not subset:
-        # Empty subset → one empty placeholder box
         ax.add_patch(Rectangle(
             (sub_x0, r2_y), CELL, CELL,
             facecolor='#F5F5F5', edgecolor='#BDBDBD',
@@ -336,12 +290,10 @@ def draw_node(cx, cy, node):
                     ha='center', va='center',
                     fontsize=11.0, color='#0D47A1', fontweight='bold', zorder=6)
 
-    # Divider line
     ax.plot([x0 + 0.06, x0 + NODE_W - 0.06],
             [r3_y + CELL * 0.9 + 0.026, r3_y + CELL * 0.9 + 0.026],
             color='#ECEFF1', lw=DIVLW, zorder=5)
 
-    # ─── ROW 3 : TargetSum ───────────────────────────────────────────────────
     if rem == 0:
         ts_col, ts_fw = '#2E7D32', 'bold'
     elif rem < 0:
@@ -355,13 +307,9 @@ def draw_node(cx, cy, node):
             fontsize=12.0, color=ts_col, fontweight=ts_fw, zorder=6)
 
 
-# Draw every node
 for nid, data in all_nodes.items():
     draw_node(*pos[nid], data)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 6.  LEGEND
-# ─────────────────────────────────────────────────────────────────────────────
 
 leg_x     = max(all_xs) + NODE_W / 2 + 0.55
 leg_y_top = max(all_ys) + NODE_H / 2
@@ -394,9 +342,6 @@ for i, (st, lbl) in enumerate(legend_items):
     ax.text(bx + LBOX + 0.16, by - LBOX / 2 + 0.04,
             lbl, fontsize=13.0, va='center', color='#37474F', zorder=8)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 7.  TITLE + STATS
-# ─────────────────────────────────────────────────────────────────────────────
 
 cx_t = (min(all_xs) + max(all_xs)) / 2
 
@@ -415,9 +360,6 @@ ax.text(cx_t, max(all_ys) + NODE_H / 2 + 0.15,
         f'Pruned: {prune_cnt}',
         ha='center', fontsize=14, color='#90A4AE', zorder=9)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 8.  SAVE
-# ─────────────────────────────────────────────────────────────────────────────
 
 ax.set_xlim(min(all_xs) - NODE_W - 0.3, leg_x + 4.0)
 ax.set_ylim(min(all_ys) - NODE_H - 0.5, max(all_ys) + NODE_H + 1.6)
